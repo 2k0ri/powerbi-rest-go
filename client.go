@@ -15,14 +15,18 @@ type PowerBIClient struct {
 	GroupId string
 }
 
-func (c *PowerBIClient) CreateDataSet(d DataSet) {
+func (c *PowerBIClient) CreateDataSet(d DataSet, disableRetention bool) {
 	j, err := json.Marshal(d)
 	if err != nil {
 		log.Fatal(err)
 	}
+	q := "datasets"
+	if disableRetention {
+		q += "?dafeaultRetentionPolicy=None"
+	}
 	r := c.request("POST", "datasets?defaultRetentionPolicy=None", bytes.NewReader(j))
 	defer r.Body.Close()
-	fmt.Println(ioutil.ReadAll(r.Body))
+	fmt.Println(string(ioutil.ReadAll(r.Body)))
 }
 
 func (c *PowerBIClient) GetDataSets() []DataSet {
@@ -64,6 +68,9 @@ func (c *PowerBIClient) request(method, path string, body io.Reader) *http.Respo
 	err = h.ParseForm()
 	if err != nil {
 		log.Fatal(err)
+	}
+	if method == "POST" {
+		h.Header.Set("Content-Type", "application/json")
 	}
 	h.Header.Set("Authorization", "Bearer "+c.Token)
 	log.Print(h)
