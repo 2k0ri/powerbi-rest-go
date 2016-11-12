@@ -40,6 +40,23 @@ func (c *PowerBIClient) GetDataSets() []DataSet {
 	return nil // @TODO
 }
 
+func (c *PowerBIClient) AddRows(dataSetId, tableName string, rows Rows) (string, error) {
+	b, err := json.Marshal(rows)
+	if err != nil {
+		return "", err
+	}
+	r := c.request("POST", "datasets/"+dataSetId+"/tables/"+tableName+"/rows", bytes.NewReader(b))
+	if err != nil {
+		return "", err
+	}
+	defer r.Body.Close()
+	res, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(res), nil
+}
+
 func (c *PowerBIClient) GetGroups() []DataSet {
 	r := c.request("GET", "groups", nil)
 	defer r.Body.Close()
